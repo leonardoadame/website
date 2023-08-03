@@ -55,13 +55,15 @@ def main(tags, token, path, last_n_pr):
     """).render(tags=tags, last_n_pr=last_n_pr)
 
     try:
-        r = requests.post("https://api.github.com/graphql",
-                          json={"query": query},
-                          headers={
-                              "Authorization": "token %s" % token,
-                              "Accept": "application/vnd.github.ocelot-preview+json",
-                              "Accept-Encoding": "gzip"
-                          })
+        r = requests.post(
+            "https://api.github.com/graphql",
+            json={"query": query},
+            headers={
+                "Authorization": f"token {token}",
+                "Accept": "application/vnd.github.ocelot-preview+json",
+                "Accept-Encoding": "gzip",
+            },
+        )
         r.raise_for_status()
 
         reply = r.json()
@@ -71,7 +73,7 @@ def main(tags, token, path, last_n_pr):
             files = pr["node"]["files"]["edges"]
             for f in files:
                 if path == f["node"]["path"]:
-                    print("%s (%s)" % (pr["node"]["title"], pr["node"]["state"]))
+                    print(f'{pr["node"]["title"]} ({pr["node"]["state"]})')
                     print(pr["node"]["url"])
                     print("----------------")
 
@@ -79,11 +81,11 @@ def main(tags, token, path, last_n_pr):
         gh_err_response = json.loads(err.response.text)
         print("HTTP Error: %d %s" % (err.response.status_code, gh_err_response['message']))
     except requests.exceptions.ConnectionError as err:
-        print("Error Connecting: %s" % err)
+        print(f"Error Connecting: {err}")
     except requests.exceptions.Timeout as err:
-        print("Timeout Error: %s" % err)
+        print(f"Timeout Error: {err}")
     except requests.exceptions.RequestException as err:
-        print("Oops, another error occurred: %s" % err)
+        print(f"Oops, another error occurred: {err}")
 
 if __name__ == '__main__':
     main()

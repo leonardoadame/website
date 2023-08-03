@@ -22,19 +22,19 @@ class RedisWQ(object):
     concurrently.
     """
     def __init__(self, name, **redis_kwargs):
-       """The default connection parameters are: host='localhost', port=6379, db=0
+        """The default connection parameters are: host='localhost', port=6379, db=0
 
        The work queue is identified by "name".  The library may create other
        keys with "name" as a prefix. 
        """
-       self._db = redis.StrictRedis(**redis_kwargs)
-       # The session ID will uniquely identify this "worker".
-       self._session = str(uuid.uuid4())
-       # Work queue is implemented as two queues: main, and processing.
-       # Work is initially in main, and moved to processing when a client picks it up.
-       self._main_q_key = name
-       self._processing_q_key = name + ":processing"
-       self._lease_key_prefix = name + ":leased_by_session:"
+        self._db = redis.StrictRedis(**redis_kwargs)
+        # The session ID will uniquely identify this "worker".
+        self._session = str(uuid.uuid4())
+        # Work queue is implemented as two queues: main, and processing.
+        # Work is initially in main, and moved to processing when a client picks it up.
+        self._main_q_key = name
+        self._processing_q_key = f"{name}:processing"
+        self._lease_key_prefix = f"{name}:leased_by_session:"
 
     def sessionID(self):
         """Return the ID for this session."""

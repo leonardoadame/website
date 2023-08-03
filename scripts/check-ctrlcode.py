@@ -44,7 +44,7 @@ def check_ctrlcode(filepath):
             # check 0x00-0x1f except 0x09(HT), 0x0a(LF), 0x0d(CR)
             pattern = re.compile('[\u0000-\u0008\u000b\u000c\u000e-\u001f]')
             m = pattern.search(str)
-            if(m == None):
+            if m is None:
                 continue
             pos = m.end()
             ctrl = m.group().encode("utf-8")

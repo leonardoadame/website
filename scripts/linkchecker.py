@@ -102,15 +102,15 @@ def new_record(level, message, target):
 
     result = None
     if ARGS.no_color:
-        result = target + ": " + message
+        result = f"{target}: {message}"
     else:
         target = C_GRAY + target + C_END
         if level == "INFO":
-            result = target + ": " + C_GREEN + message + C_END
+            result = f"{target}: {C_GREEN}{message}{C_END}"
         elif level == "WARNING":
-            result = target + ": " + C_YELLOW + message + C_END
-        else:  # default to error
-            result = target + ": " + C_RED + message + C_END
+            result = f"{target}: {C_YELLOW}{message}{C_END}"
+        else:
+            result = f"{target}: {C_RED}{message}{C_END}"
 
     return result
 
@@ -122,9 +122,9 @@ def dump_result():
     for path, path_output in RESULT.items():
         norm_path = os.path.normpath(path)
         if ARGS.no_color:
-            print("File: " + norm_path)
+            print(f"File: {norm_path}")
         else:
-            print(C_CYAN + "File: " + norm_path + C_END)
+            print(f"{C_CYAN}File: {norm_path}{C_END}")
         for p in path_output:
             print(" "*4 + p)
     return
@@ -178,10 +178,7 @@ def normalize_filename(name, ftype="markdown"):
     """
     if name.endswith("/"):
         name = name[:-1]
-    if ftype == "markdown":
-        name += ".md"
-    else:
-        name += ".html"
+    name += ".md" if ftype == "markdown" else ".html"
     return name
 
 
@@ -207,12 +204,12 @@ def check_file_exists(base, path, ftype="markdown"):
 
     dir_name = base + parts[0]
     if os.path.isdir(dir_name):
-        if os.path.isfile(dir_name + "/_index.md"):
+        if os.path.isfile(f"{dir_name}/_index.md"):
             return True
-        if os.path.isfile(dir_name + "/_index.html"):
+        if os.path.isfile(f"{dir_name}/_index.html"):
             return True
         # /docs/contribute/style/hugo-shortcodes/ has this
-        if os.path.isfile(dir_name + "/index.md"):
+        if os.path.isfile(f"{dir_name}/index.md"):
             return True
     return False
 
@@ -293,8 +290,7 @@ def check_target(page, anchor, target):
         return new_record("INFO", "Link to image, skipped", target)
 
     # link to English or localized page
-    if (target.startswith("/docs/") or
-            target.startswith("/" + LANG + "/docs/")):
+    if target.startswith("/docs/") or target.startswith(f"/{LANG}" + "/docs/"):
 
         # target is shared reference (kubectl or kubernetes-api?
         if (target.find("/docs/reference/generated/kubectl/") >= 0 or
@@ -309,8 +305,7 @@ def check_target(page, anchor, target):
         else:
             # localized target
             base = os.path.join(ROOT, "content")
-        ok = check_file_exists(base, target)
-        if ok:
+        if ok := check_file_exists(base, target):
             # We do't do additional checks for English site even if it has
             # links to a non-English page
             if LANG == "en":
@@ -331,9 +326,7 @@ def check_target(page, anchor, target):
 
             return new_record("ERROR", msg, target)
 
-        # taget might be a redirect entry
-        real_target = get_redirect(target)
-        if real_target:
+        if real_target := get_redirect(target):
             msg = ("Link using redirect records, should use %s instead" %
                    real_target)
             return new_record("WARNING", msg, target)
@@ -359,7 +352,7 @@ def check_anchor(target, anchor):
             with open(target, "r") as f:
                 data = f.readlines()
         except Exception as ex:
-            print("[Error] failed in reading markdown file: " + str(ex))
+            print(f"[Error] failed in reading markdown file: {str(ex)}")
             return
         content = "\n".join(strip_comments(data))
         anchor_pattern1 = r"<a name=\"(.*?)\""
@@ -378,17 +371,20 @@ def check_apiref_target(target, anchor):
     """
     base = os.path.join(ROOT, "content", "en", "docs", "reference",
                         "kubernetes-api")
-    ok = check_file_exists(base + "/", target)
+    ok = check_file_exists(f"{base}/", target)
     if not ok:
         return new_record("ERROR", "API reference page not found", target)
 
     if anchor is None:
         return
 
-    target_page = os.path.join(base, target)+".md"
+    target_page = f"{os.path.join(base, target)}.md"
     if not check_anchor(target_page, anchor):
-        return new_record("ERROR", "Anchor not found in API reference page",
-                          target+"#"+anchor)
+        return new_record(
+            "ERROR",
+            "Anchor not found in API reference page",
+            f"{target}#{anchor}",
+        )
 
 
 def validate_links(page, in_place_edit):
@@ -400,7 +396,7 @@ def validate_links(page, in_place_edit):
         with open(page, "r") as f:
             data = f.readlines()
     except Exception as ex:
-        print("[Error] failed in reading markdown file: " + str(ex))
+        print(f"[Error] failed in reading markdown file: {str(ex)}")
         return
 
     content = "\n".join(strip_comments(data))
@@ -413,8 +409,7 @@ def validate_links(page, in_place_edit):
     records = []
     target_records = []
     for m in matches:
-        r = check_target(page, m[0], m[1])
-        if r:
+        if r := check_target(page, m[0], m[1]):
             records.append(r)
             target_records.append(m[1])
 
@@ -446,8 +441,7 @@ def validate_links(page, in_place_edit):
 
     matches = regex.findall(content)
     for m in matches:
-        r = check_apiref_target(m[0], m[1])
-        if r:
+        if r := check_apiref_target(m[0], m[1]):
             records.append(r)
 
     # searches for pattern: {{< api-reference page=""
@@ -456,8 +450,7 @@ def validate_links(page, in_place_edit):
 
     matches = regex.findall(content)
     for m in matches:
-        r = check_apiref_target(m, None)
-        if r:
+        if r := check_apiref_target(m, None):
             records.append(r)
 
     if len(records):
@@ -520,13 +513,13 @@ def main():
             if entry.endswith("/"):
                 REDIRECTS[entry] = parts[1]
             else:
-                REDIRECTS[entry + "/"] = parts[1]
+                REDIRECTS[f"{entry}/"] = parts[1]
 
     except Exception as ex:
-        print("[Error] failed in reading redirects file: " + str(ex))
+        print(f"[Error] failed in reading redirects file: {str(ex)}")
         return
 
-    folders = [f for f in glob.glob(ARGS.filter, recursive=True)]
+    folders = list(glob.glob(ARGS.filter, recursive=True))
     for page in folders:
         validate_links(page, ARGS.in_place_edit)
 

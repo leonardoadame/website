@@ -15,9 +15,9 @@ def find_documents_to_rewrite():
         destinations = get_destinations_for_doc(doc)
 
         if len(destinations) == 0:
-            print("Unable to get possible destinations for %s" % doc)
+            print(f"Unable to get possible destinations for {doc}")
         elif len(destinations) > 1:
-            print("%s has multiple potential destinations. Not rewriting links." % doc)
+            print(f"{doc} has multiple potential destinations. Not rewriting links.")
         else:
             # print("%s --> %s" % (location, destinations[0]))
             rewrites.append((location, destinations[0]))
@@ -29,9 +29,9 @@ def find_documents_to_rewrite():
 # /docs/path/to/foo/bar.md are available at /docs/path/to/foo/bar/
 def doc_location(filename):
     if filename.endswith('/index.md'):
-        return "/docs/" + filename[:-9] + "/"
+        return f"/docs/{filename[:-9]}/"
     else:
-        return "/docs/" + filename[:-3] + "/"
+        return f"/docs/{filename[:-3]}/"
 
 REDIRECT_REGEX = re.compile("^.*\[(.*)\]\((.*)\)$")
 
@@ -63,7 +63,7 @@ def rewrite_documents(rewrites):
     cmd = "find . -name '*.md' -type f -exec sed -i.bak 's@(%s)@(%s)@g' '{}' \;"
     for original, new in rewrites:
 
-        print("%s --> %s" % (original, new))
+        print(f"{original} --> {new}")
         original = original.replace('-', '\-')
         new = new.replace('-', '\-')
 

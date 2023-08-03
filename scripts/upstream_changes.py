@@ -21,10 +21,13 @@ def diff(reference_commit_hash, translation_commit_hash, reference_path, git):
     """
     Returns the diff between two hashes on a specific file
     """
-    cmd = [git, "diff",
-           "%s...%s" % (translation_commit_hash, reference_commit_hash),
-           "--",
-           reference_path]
+    cmd = [
+        git,
+        "diff",
+        f"{translation_commit_hash}...{reference_commit_hash}",
+        "--",
+        reference_path,
+    ]
     try:
         return check_output(cmd)
     except Exception as exc:
